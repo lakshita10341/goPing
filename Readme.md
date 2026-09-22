@@ -1,0 +1,1 @@
+Implemetation of ping command in Go
