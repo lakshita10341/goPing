@@ -1,6 +1,7 @@
-package ICMP
+package icmp
 import ( "encoding/binary"
-		 "fmt")
+		"fmt"
+		)
 type ICMPPacket struct{
 	Type uint8
 	Code uint8
@@ -24,18 +25,21 @@ func Marshal( p ICMPPacket) []byte{
 func Checksum(data[]byte) uint16{
 	var sum uint32
 	for i:=0; i+1<len(data); i+=2{
-		word:=uint32(data[i]<<8 | data[i+1])
+		word:=uint32(data[i])<<8 | uint32(data[i+1])
 		sum+=word
 	}
 	if len(data)%2!=0 {
-		sum+=uint32(data[len(data)-1]<<8)
+		sum+=uint32(data[len(data)-1])<<8
 	}
-	if sum>>16!=0 {
+	for sum>>16!=0 {
 		sum = (sum & 0xffff) + sum>>16
 	}
 	return ^uint16(sum)
 }
-func Parse(data[] byte) (ICMPPacket){
+func Parse(data[] byte) (ICMPPacket,error){
+	if len(data) < 8 {
+        return ICMPPacket{}, fmt.Errorf("ICMP packet too short: %d bytes", len(data))
+    }
 	packet:=ICMPPacket{
 		Type: data[0],
 		Code: data[1],
@@ -45,16 +49,6 @@ func Parse(data[] byte) (ICMPPacket){
 		Payload: data[8:],
 		
 	}
-	return packet
+	return packet,nil
 }
-func main(){
-	packet:=ICMPPacket{
-		Type:8,
-		Code:0,
-		Identifier:2807,
-		Sequence:1,
-		Payload:[]byte("hello"),
-	}
-	data:=Marshal(packet)
-	
-}
+
